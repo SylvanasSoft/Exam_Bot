@@ -8,3 +8,6 @@ restart:
 
 stop:
 	docker compose down
+
+remove:
+	docker rmi exam_bot-bot:latest

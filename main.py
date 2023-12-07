@@ -4,10 +4,12 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from reply import start, bot_menu, man_woman, week_days
-from db import *
+import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, BIGINT, insert, select
+from sqlalchemy.orm import declarative_base, Mapped, Session, mapped_column
 
 # https://t.me/illegal_testing_bot
 TOKEN = "6408363442:AAFQdRmPBBJpTi1_S59VC6zppaFXDVTFGrA"
@@ -16,6 +18,33 @@ choosing = "Quydagilardan birontasini tanlang 👇🏿"
 
 file = "AgACAgIAAxkBAAICyGVxoNZw4V7dYVKyA4LCyFZsEB56AAJS0zEbVxSRSwfrKkVSj3XlAQADAgADcwADMwQ"
 photo_caption = "Assalomu alaykum !\nBu bo'timiz sizga kunlik qiladigan 🏋️ mashqlarni ko'rsatib beradi"
+
+load_dotenv()
+Base = declarative_base()
+
+
+class Config:
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_NAME = os.getenv("DB_NAME")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_CONFIG = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+
+
+engine = create_engine(Config().DB_CONFIG)
+session = Session(engine)
+
+
+class User(Base):
+    __tablename__ = 'bot_users'
+    id: Mapped[int] = mapped_column(__type_pos=BIGINT, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(__type_pos=BIGINT, unique=True)
+    first_name: Mapped[str] = mapped_column(nullable=True)
+    last_name: Mapped[str] = mapped_column(nullable=True)
+    username: Mapped[str] = mapped_column(unique=True, nullable=True)
+
+
+Base.metadata.create_all(engine)
 
 
 @dp.message(CommandStart())
