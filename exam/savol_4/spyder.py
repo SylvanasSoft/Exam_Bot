@@ -15,7 +15,7 @@ async def get_news():
     soup = BeautifulSoup(response, 'html.parser')
     article = soup.find('div', class_='vue cards')
     titles = [i.text for i in article.find_all('h2', class_='category')]
-    # for i in article.find('div', class_='summary-group'):
-    #     print(i)
+    for i in article.find('div', class_='summary-group'):
+        print(i)
     times = [i.text for i in soup.find_all('a')]
     return titles

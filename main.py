@@ -1,12 +1,14 @@
 import asyncio
 import logging
 import sys
+import os
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 from reply import start, bot_menu, man_woman, week_days
-import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, BIGINT, insert, select
 from sqlalchemy.orm import declarative_base, Mapped, Session, mapped_column
@@ -47,8 +49,18 @@ class User(Base):
 Base.metadata.create_all(engine)
 
 
+# StateClasses
+class UserStates(StatesGroup):
+    back = State()
+    menu = State()
+    start_menu = State()
+    woman_man = State()
+    last_menu = State()
+
+
+@dp.message(UserStates.back)
 @dp.message(CommandStart())
-async def bot_start(msg: Message) -> None:
+async def bot_start(msg: Message, state: FSMContext) -> None:
     user_data = {
         'user_id': msg.from_user.id,
         'first_name': msg.from_user.first_name,
@@ -61,40 +73,50 @@ async def bot_start(msg: Message) -> None:
         session.execute(query)
         session.commit()
     await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=bot_menu())
+    await state.set_state(UserStates.menu)
 
 
+@dp.message(UserStates.menu)
 @dp.message(lambda msg: msg.text == "Start ✅")
-async def start_training_handler(msg: Message):
+async def start_training_handler(msg: Message, state: FSMContext):
     await msg.answer(text=choosing, reply_markup=start())
+    await state.set_state(UserStates.start_menu)
 
 
+@dp.message(UserStates.start_menu)
 @dp.message(lambda msg: msg.text == "Woman️")
 @dp.message(lambda msg: msg.text == "Men")
-async def man_woman_handler(msg: Message):
+async def man_woman_handler(msg: Message, state: FSMContext):
     await msg.answer(text=choosing, reply_markup=man_woman())
+    await state.set_state(UserStates.woman_man)
 
 
+@dp.message(UserStates.woman_man)
 @dp.message(lambda msg: msg.text == "1-oy")
 @dp.message(lambda msg: msg.text == "2-oy")
 @dp.message(lambda msg: msg.text == "3-oy")
 @dp.message(lambda msg: msg.text == "4-oy")
-async def weekday_handler(msg: Message):
+async def weekday_handler(msg: Message, state: FSMContext):
     await msg.answer(text="Hafta kunlaridan birontasini tanlang", reply_markup=week_days())
+    await state.set_state(UserStates.last_menu)
 
 
+@dp.message(UserStates.last_menu)
 @dp.message(lambda msg: msg.text == 'Dushanba')
 @dp.message(lambda msg: msg.text == 'Seshanba')
 @dp.message(lambda msg: msg.text == 'Chorshanba')
 @dp.message(lambda msg: msg.text == 'Payshanba')
 @dp.message(lambda msg: msg.text == 'Juma')
 @dp.message(lambda msg: msg.text == 'Shanba')
-async def training(msg: Message):
+async def training(msg: Message, state: FSMContext):
     await msg.answer(text="Dalshe ma'lumot yo'q 😉😄", reply_markup=week_days())
+    await state.set_state(UserStates.menu)
 
 
 @dp.message(lambda msg: msg.text == '🔙 Back')
-async def back(msg: Message):
+async def back(msg: Message, state: FSMContext):
     await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=start())
+    await state.set_state(UserStates.back)
 
 
 async def main() -> None:

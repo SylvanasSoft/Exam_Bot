@@ -33,9 +33,6 @@ async def news_handler(msg: Message):
     data = await get_news()
     text = f"""
 title: {data[0]}
-title: {data[1]}
-title: {data[2]}
-title: {data[3]}
 """
     await msg.answer(text=text, reply_markup=bot_menu())
 
