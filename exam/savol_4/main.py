@@ -20,7 +20,7 @@ photo_caption = "Assalomu alaykum !\nBu bo'timiz sizga kunlik qiladigan 🏋️ 
 
 
 @dp.message(CommandStart())
-async def bot_start(msg: Message) -> None:
+async def bot_start_handler(msg: Message) -> None:
     await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=bot_menu())
 
 
