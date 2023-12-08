@@ -1,13 +1,14 @@
 import asyncio
 import logging
 import sys
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from reply import start, bot_menu, man_woman
+from reply import start, bot_menu, man_woman, week_days
 from spyder import get_news
+from utils import *
 
 # https://t.me/illegal_testing_bot
 TOKEN = "6408363442:AAFQdRmPBBJpTi1_S59VC6zppaFXDVTFGrA"
@@ -28,13 +29,42 @@ async def start_training_handler(msg: Message):
     await msg.answer(text=choosing, reply_markup=start())
 
 
+@dp.message(lambda msg: msg.text == "Admin 👨🏻‍💻")
+async def admin_handler(msg: Message):
+    await msg.answer(text="https://t.me/ieee01", reply_markup=bot_menu())
+
+
+@dp.message(lambda msg: msg.text == "Filial 📍")
+async def admin_handler(msg: Message):
+    await msg.answer_location(latitude=41.304476, longitude=69.253043, reply_markup=bot_menu())
+
+
 @dp.message(lambda msg: msg.text == "NewsPost")
 async def news_handler(msg: Message):
-    data = await get_news()
-    text = f"""
-title: {data[0]}
+    text1 = f"""
+title: {data1.get('title')}
+desc: {data1.get('caption')}
+time: {data1.get('time')}
 """
-    await msg.answer(text=text, reply_markup=bot_menu())
+    text2 = f"""
+title: {data2.get('title')}
+desc: {data2.get('caption')}
+time: {data2.get('time')}
+"""
+    text3 = f"""
+title: {data3.get('title')}
+desc: {data3.get('caption')}
+time: {data3.get('time')}
+"""
+    text4 = f"""
+title: {data4.get('title')}
+desc: {data4.get('caption')}
+time: {data4.get('time')}
+"""
+    await msg.answer_photo(photo=data1.get('photo_file'), caption=text1)
+    await msg.answer_photo(photo=data2.get('photo_file'), caption=text2)
+    await msg.answer_photo(photo=data3.get('photo_file'), caption=text3)
+    await msg.answer_photo(photo=data4.get('photo_file'), caption=text4)
 
 
 @dp.message(lambda msg: msg.text == "Woman️")
