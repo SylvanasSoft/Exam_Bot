@@ -1,6 +1,5 @@
 import smtplib
 import ssl
-
 from celery import Celery
 
 app = Celery('sender', broker='pyamqp://guest@localhost/')
