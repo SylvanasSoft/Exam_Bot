@@ -5,9 +5,9 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 from reply import start, bot_menu, man_woman, week_days
-from spyder import get_news
 from utils import *
 
 # https://t.me/illegal_testing_bot
@@ -19,14 +19,24 @@ file = "AgACAgIAAxkBAAICyGVxoNZw4V7dYVKyA4LCyFZsEB56AAJS0zEbVxSRSwfrKkVSj3XlAQAD
 photo_caption = "Assalomu alaykum !\nBu bo'timiz sizga kunlik qiladigan 🏋️ mashqlarni ko'rsatib beradi"
 
 
+class UserStates(StatesGroup):
+    first_menu = State()
+    choosing_male = State()
+    months = State()
+    weeks = State()
+    back = State()
+
+
 @dp.message(CommandStart())
 async def bot_start_handler(msg: Message) -> None:
     await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=bot_menu())
 
 
+@dp.message(UserStates.first_menu)
 @dp.message(lambda msg: msg.text == "Start ✅")
-async def start_training_handler(msg: Message):
+async def start_training_handler(msg: Message, state: FSMContext):
     await msg.answer(text=choosing, reply_markup=start())
+    await state.set_state(UserStates.choosing_male)
 
 
 @dp.message(lambda msg: msg.text == "Admin 👨🏻‍💻")
@@ -67,33 +77,33 @@ time: {data4.get('time')}
     await msg.answer_photo(photo=data4.get('photo_file'), caption=text4)
 
 
-@dp.message(lambda msg: msg.text == "Woman️")
-@dp.message(lambda msg: msg.text == "Men")
-async def man_woman_handler(msg: Message):
-    await msg.answer(text=choosing, reply_markup=man_woman())
+@dp.message(UserStates.choosing_male)
+async def man_woman_handler(msg: Message, state: FSMContext):
+    if msg.text == '🔙 Back':
+        await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=start())
+        await state.set_state(UserStates.first_menu)
+    else:
+        await msg.answer(text=choosing, reply_markup=man_woman())
+        await state.set_state(UserStates.months)
 
 
-@dp.message(lambda msg: msg.text == "1-oy")
-@dp.message(lambda msg: msg.text == "2-oy")
-@dp.message(lambda msg: msg.text == "3-oy")
-@dp.message(lambda msg: msg.text == "4-oy")
-async def weekday_handler(msg: Message):
-    await msg.answer(text="Hafta kunlaridan birontasini tanlang", reply_markup=week_days())
+@dp.message(UserStates.months)
+async def weekday_handler(msg: Message, state: FSMContext):
+    if msg.text == '🔙 Back':
+        await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=start())
+        await state.set_state(UserStates.first_menu)
+    else:
+        await msg.answer(text="Hafta kunlaridan birontasini tanlang", reply_markup=week_days())
+        await state.set_state(UserStates.weeks)
 
 
-@dp.message(lambda msg: msg.text == 'Dushanba')
-@dp.message(lambda msg: msg.text == 'Seshanba')
-@dp.message(lambda msg: msg.text == 'Chorshanba')
-@dp.message(lambda msg: msg.text == 'Payshanba')
-@dp.message(lambda msg: msg.text == 'Juma')
-@dp.message(lambda msg: msg.text == 'Shanba')
-async def training(msg: Message):
-    await msg.answer(text="Dalshe ma'lumot yo'q 😉😄", reply_markup=week_days())
-
-
-@dp.message(lambda msg: msg.text == '🔙 Back')
-async def back(msg: Message):
-    await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=start())
+@dp.message(UserStates.weeks)
+async def training(msg: Message, state: FSMContext):
+    if msg.text == '🔙 Back':
+        await msg.answer_photo(photo=file, caption=photo_caption, reply_markup=start())
+        await state.set_state(UserStates.first_menu)
+    else:
+        await msg.answer(text="Dalshe ma'lumot yo'q 😉😄", reply_markup=week_days())
 
 
 async def main() -> None:
